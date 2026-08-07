@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Matchdagsgenerator – Rydaholms GoIF</title>
+<style>
+  :root{
+    --bg:#15171c; --panel:#1c1f26; --panel2:#242832; --border:#333844;
+    --text:#e8eaed; --muted:#9aa1ac; --accent:#3b82f6; --accent2:#e2231a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);}
+  .app{display:flex;min-height:100vh;}
+  .panel{width:380px;flex:0 0 380px;background:var(--panel);border-right:1px solid var(--border);padding:20px;overflow-y:auto;max-height:100vh;}
+  .panel h1{font-size:17px;margin:0 0 4px;}
+  .panel .sub{color:var(--muted);font-size:12px;margin-bottom:18px;}
+  section{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+  section:last-of-type{border-bottom:none;}
+  section h2{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;}
+  label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=number], select, textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 9px;font-size:13.5px;font-family:inherit;
+  }
+  input[type=color]{width:44px;height:30px;padding:2px;border-radius:6px;border:1px solid var(--border);background:var(--panel2);}
+  .row{display:flex;gap:10px;align-items:center;}
+  .row > *{flex:1;}
+  .row.tight{gap:6px;}
+  .btn{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 12px;font-size:13px;cursor:pointer;text-align:center;
+  }
+  .btn:hover{border-color:var(--accent);}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:white;font-weight:600;}
+  .btn.primary:hover{filter:brightness(1.08);}
+  .btn.small{padding:5px 9px;font-size:12px;}
+  .dropzone{
+    border:1.5px dashed var(--border);border-radius:8px;padding:14px;text-align:center;
+    font-size:12.5px;color:var(--muted);cursor:pointer;position:relative;overflow:hidden;
+  }
+  .dropzone.has-image{border-style:solid;padding:0;}
+  .dropzone img{display:block;width:100%;height:90px;object-fit:cover;}
+  .dropzone.small{padding:10px;}
+  .dropzone.small img{height:60px;object-fit:contain;background:#0e1013;}
+  .crestrow{display:flex;gap:10px;}
+  .crestrow > div{flex:1;}
+  .crestrow .label{font-size:11px;color:var(--muted);margin-bottom:4px;text-align:center;}
+  .toggle-row{display:flex;align-items:center;gap:8px;margin:10px 0;}
+  .toggle-row label{margin:0;font-size:13px;color:var(--text);}
+  input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);}
+  input[type=range]{width:100%;accent-color:var(--accent);}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px;}
+  .main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 20px;gap:18px;}
+  .canvas-wrap{
+    width:min(620px,90vw);aspect-ratio:1/1;background:#0b0c0f;border-radius:10px;overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.45);position:relative;
+    background-image:
+      linear-gradient(45deg,#1a1c22 25%,transparent 25%),
+      linear-gradient(-45deg,#1a1c22 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#1a1c22 75%),
+      linear-gradient(-45deg,transparent 75%,#1a1c22 75%);
+    background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;
+  }
+  #cv{width:100%;height:100%;display:block;cursor:grab;touch-action:none;}
+  #cv:active{cursor:grabbing;}
+  .actions{display:flex;gap:10px;width:min(620px,90vw);}
+  .actions .btn{flex:1;padding:12px;font-size:14px;}
+  .badge{font-size:11px;color:var(--muted);}
+  select option{background:var(--panel2);}
+  ::-webkit-scrollbar{width:9px;}
+  ::-webkit-scrollbar-thumb{background:#3a3f4b;border-radius:5px;}
+  textarea{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 9px;font-size:13.5px;font-family:inherit;resize:vertical;
+  }
+  input[type=datetime-local]{
+    width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:8px 9px;font-size:13.5px;font-family:inherit;
+  }
+  input[type=datetime-local]:disabled{opacity:.4;}
+  .publish-panel{
+    width:min(620px,90vw);background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:18px;
+  }
+  .publish-panel label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px;}
+  .publish-panel label:first-of-type{margin-top:0;}
+  .radio-label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);margin:0;}
+  input[type=radio]{accent-color:var(--accent);}
+  details{margin-bottom:14px;border:1px solid var(--border);border-radius:6px;padding:10px 12px;}
+  details summary{cursor:pointer;font-size:12.5px;color:var(--muted);}
+  details[open] summary{margin-bottom:8px;}
+  #publishStatus:empty{display:none;}
+  #publishStatus{white-space:pre-line;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>Matchdagsgenerator</h1>
+    <div class="sub">Rydaholms GoIF · kvadratiska matchbilder</div>
+
+    <section>
+      <h2>Mall</h2>
+      <select id="preset">
+        <option value="matchdag">Matchdag (inför)</option>
+        <option value="hemmamatch">Hemmamatch</option>
+        <option value="seger">Seger</option>
+        <option value="forlust">Förlust</option>
+        <option value="installd">Inställd match</option>
+        <option value="fri">Fri rubrik / tom mall</option>
+      </select>
+    </section>
+
+    <section>
+      <h2>Bakgrundsbild</h2>
+      <div class="dropzone" id="bgDrop">Klicka eller släpp en bild här</div>
+      <input type="file" id="bgFile" accept="image/*" style="display:none">
+      <div class="toggle-row">
+        <input type="checkbox" id="bgBw">
+        <label for="bgBw">Svartvit</label>
+      </div>
+      <div class="toggle-row">
+        <input type="checkbox" id="bgShadow" checked>
+        <label for="bgShadow">Mörk skugga nedtill (läsbarhet)</label>
+      </div>
+      <label>Zoom</label>
+      <input type="range" id="bgZoom" min="1" max="3" step="0.01" value="1">
+      <div class="hint">Dra i bilden för att flytta den. Scrolla/pinch på canvasen för att zooma.</div>
+    </section>
+
+    <section>
+      <h2>Vapen</h2>
+      <div class="crestrow">
+        <div>
+          <div class="label">Eget lag</div>
+          <div class="dropzone small has-image" id="crestHomeDrop"><img id="crestHomeImg" src="rgoif-logo.png"></div>
+          <input type="file" id="crestHomeFile" accept="image/*" style="display:none">
+        </div>
+        <div>
+          <div class="label">Motståndare</div>
+          <div class="dropzone small" id="crestAwayDrop">Ladda upp vapen</div>
+          <input type="file" id="crestAwayFile" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn small" id="swapCrests">Byt ordning ↕</button>
+        <div style="flex:2;">
+          <input type="range" id="crestSize" min="80" max="280" step="5" value="142">
+        </div>
+      </div>
+      <div class="hint">Storlek på vapnen. RGoIF:s vapen är förifyllt.</div>
+
+      <label>Justera höjd – eget lag</label>
+      <input type="range" id="crestHomeOffsetY" min="-60" max="60" step="1" value="0">
+      <label>Justera höjd – motståndare</label>
+      <input type="range" id="crestAwayOffsetY" min="-60" max="60" step="1" value="0">
+      <div class="hint">Olika loggor är olika friläggda och ser inte alltid centrerade ut matematiskt — putsa till med reglagen ovan.</div>
+    </section>
+
+    <section>
+      <h2>Lag</h2>
+      <label>Hemmalag</label>
+      <input type="text" id="teamHome" value="Rydaholms GoIF">
+      <label>Bortalag</label>
+      <input type="text" id="teamAway" placeholder="Motståndarlag">
+      <button class="btn small" id="swapTeams" style="margin-top:8px;">Byt hemma/borta ⇄</button>
+
+      <div class="toggle-row" style="margin-top:14px;">
+        <input type="checkbox" id="scoreEnabled">
+        <label for="scoreEnabled">Visa resultat</label>
+      </div>
+      <div class="row" id="scoreRow" style="display:none;">
+        <input type="number" id="scoreHome" placeholder="0" min="0">
+        <input type="number" id="scoreAway" placeholder="0" min="0">
+      </div>
+    </section>
+
+    <section>
+      <h2>Rubrik</h2>
+      <label>Text</label>
+      <input type="text" id="headlineText" placeholder="t.ex. MATCHDAG, SEGER, SERIEPREMIÄR">
+      <div class="row" style="margin-top:8px;">
+        <div>
+          <label>Stil</label>
+          <select id="headlineStyle">
+            <option value="none">Ingen</option>
+            <option value="top">Överst, hela bredden</option>
+            <option value="vertical">Vertikal, höger kant</option>
+            <option value="stamp">Diagonal stämpel</option>
+          </select>
+        </div>
+        <div style="flex:0 0 60px;">
+          <label>Färg</label>
+          <input type="color" id="headlineColor" value="#ffffff">
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Infotext (datum/tid/plats)</h2>
+      <input type="text" id="infoLine" placeholder="t.ex. Lördag 16:00, Kungshall">
+      <label>Textstorlek</label>
+      <input type="range" id="infoSize" min="16" max="60" step="1" value="38">
+      <div class="row" style="margin-top:8px;">
+        <div>
+          <label>Textfärg</label>
+          <input type="color" id="textColor" value="#ffffff">
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="1080" height="1080"></canvas>
+    </div>
+    <div class="actions">
+      <button class="btn" id="resetBg">Återställ bildposition</button>
+      <button class="btn primary" id="download">Ladda ner PNG</button>
+    </div>
+    <div class="badge">1080 × 1080 px</div>
+
+    <div class="publish-panel">
+      <details id="githubSettings">
+        <summary>GitHub-inställningar (engångsuppsättning)</summary>
+        <label>Repo (ägare/repo, t.ex. gabrielxx/rgoif-matchdagsbilder)</label>
+        <input type="text" id="ghRepo" placeholder="ägare/repo">
+        <label>Personal Access Token</label>
+        <input type="password" id="ghToken" placeholder="github_pat_…">
+        <div class="hint">Sparas bara lokalt i din webbläsare. Använd en fine-grained token begränsad till just detta repo (Contents + Actions: Read and write).</div>
+      </details>
+
+      <label>Text till inlägget</label>
+      <textarea id="postCaption" rows="4" placeholder="Skriv texten som ska följa med bilden på Facebook och Instagram…"></textarea>
+
+      <label>Plattformar</label>
+      <div class="row tight">
+        <div class="toggle-row"><input type="checkbox" id="platformFacebook" checked><label for="platformFacebook">Facebook</label></div>
+        <div class="toggle-row"><input type="checkbox" id="platformInstagram" checked><label for="platformInstagram">Instagram</label></div>
+      </div>
+
+      <label>När ska det publiceras?</label>
+      <div class="row tight" style="margin-bottom:8px;">
+        <label class="radio-label"><input type="radio" name="publishWhen" id="publishNow" value="now" checked> Nu</label>
+        <label class="radio-label"><input type="radio" name="publishWhen" id="publishLater" value="later"> Schemalagt</label>
+      </div>
+      <input type="datetime-local" id="publishAt" disabled>
+
+      <button class="btn primary" id="publishBtn" style="width:100%;margin-top:12px;">Publicera</button>
+      <div id="publishStatus" class="hint"></div>
+    </div>
+  </main>
+</div>
+<script src="app.js"></script>
+<script src="publish.js"></script>
+</body>
+</html>

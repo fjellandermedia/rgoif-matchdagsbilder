@@ -1,0 +1,64 @@
+name: Publish match image
+
+"on":
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      image_path:
+        description: 'Repo-relative path to the image (e.g. images/2026-08-10T1530-ab12cd.jpg)'
+        required: false
+      caption:
+        description: 'Caption text for the post'
+        required: false
+      platforms:
+        description: 'Comma-separated: facebook,instagram'
+        required: false
+        default: 'facebook,instagram'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-queue
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Publish immediately (manual trigger from the web app)
+        if: github.event_name == 'workflow_dispatch' && inputs.image_path != ''
+        env:
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+          IMAGE_PATH: ${{ inputs.image_path }}
+          CAPTION: ${{ inputs.caption }}
+          PLATFORMS: ${{ inputs.platforms }}
+        run: |
+          IMAGE_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/${IMAGE_PATH}"
+          python scripts/publish.py --image-url "$IMAGE_URL" --caption "$CAPTION" --platforms "$PLATFORMS"
+
+      - name: Process due scheduled posts
+        if: github.event_name == 'schedule'
+        env:
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+        run: python scripts/process_queue.py
+
+      - name: Commit queue state
+        if: github.event_name == 'schedule'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add queue/
+          git diff --staged --quiet || git commit -m "Process scheduled posts [skip ci]"
+          git push
