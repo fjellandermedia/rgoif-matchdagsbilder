@@ -5,6 +5,10 @@ name: Publish match image
     - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
+      dry_run:
+        description: 'Only verify the Meta credentials — do not publish anything'
+        type: boolean
+        default: false
       image_path:
         description: 'Repo-relative path to the image (e.g. images/2026-08-10T1530-ab12cd.jpg)'
         required: false
@@ -33,8 +37,16 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Check credentials only (dry run)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        env:
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_IG_USER_ID: ${{ secrets.META_IG_USER_ID }}
+        run: python scripts/check_credentials.py
+
       - name: Publish immediately (manual trigger from the web app)
-        if: github.event_name == 'workflow_dispatch' && inputs.image_path != ''
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.image_path != ''
         env:
           META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
