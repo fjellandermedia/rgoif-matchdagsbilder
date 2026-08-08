@@ -31,9 +31,18 @@ def main():
     ok = True
 
     print(f"Checking Facebook Page {page_id}...")
-    success, result = get(f"{GRAPH}/{page_id}", {"fields": "id,name", "access_token": token})
+    success, result = get(f"{GRAPH}/{page_id}", {"fields": "id,name,tasks", "access_token": token})
     if success:
         print(f"  OK: connected to Page \"{result.get('name')}\" ({result.get('id')})")
+        tasks = result.get("tasks", [])
+        print(f"  Token tasks on this Page: {tasks}")
+        if "CREATE_CONTENT" in tasks:
+            print("  OK: token has CREATE_CONTENT — allowed to publish posts on this Page.")
+        else:
+            ok = False
+            print("  FAILED: token does NOT have CREATE_CONTENT — it can read the Page but "
+                  "not publish to it. Regenerate the token and make sure 'pages_manage_posts' "
+                  "is checked.")
     else:
         ok = False
         print(f"  FAILED: {result}")
