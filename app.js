@@ -418,10 +418,36 @@ $("bgDrop").addEventListener("drop", (e) => {
 
 /* ---------- crests: upload ---------- */
 
+// Keeps the visible crest preview (home always shows something — falls back
+// to the bundled RGoIF logo; away shows a placeholder text until one is set)
+// in sync with state. Shared by manual upload, team-swap, and loading a
+// saved configuration.
+function setCrestPreview(which, src) {
+  if (which === "crestHome") {
+    $("crestHomeImg").src = src || "rgoif-logo.png";
+    return;
+  }
+  const drop = $("crestAwayDrop");
+  const placeholder = $("crestAwayPlaceholder");
+  const img = $("crestAwayImg");
+  if (src) {
+    img.src = src;
+    img.style.display = "block";
+    placeholder.style.display = "none";
+    drop.classList.add("has-image");
+  } else {
+    img.removeAttribute("src");
+    img.style.display = "none";
+    placeholder.style.display = "";
+    drop.classList.remove("has-image");
+  }
+}
+
 async function setCrestFromFile(which, file) {
   if (!file) return;
   const img = await loadImageFromFile(file);
   state[which].img = img;
+  setCrestPreview(which, img.src);
   render();
 }
 
@@ -443,7 +469,8 @@ $("swapTeams").addEventListener("click", () => {
   $("teamAway").value = state.teamAway;
   $("scoreHome").value = state.scoreHome;
   $("scoreAway").value = state.scoreAway;
-  $("crestHomeImg").src = state.crestHome.img ? state.crestHome.img.src : "rgoif-logo.png";
+  setCrestPreview("crestHome", state.crestHome.img ? state.crestHome.img.src : null);
+  setCrestPreview("crestAway", state.crestAway.img ? state.crestAway.img.src : null);
   $("crestHomeOffsetY").value = state.crestHomeOffsetY;
   $("crestAwayOffsetY").value = state.crestAwayOffsetY;
   render();

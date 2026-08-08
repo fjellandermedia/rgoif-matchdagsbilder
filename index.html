@@ -93,6 +93,14 @@
   details[open] summary{margin-bottom:8px;}
   #publishStatus:empty{display:none;}
   #publishStatus{white-space:pre-line;}
+  .config-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;}
+  .config-item{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);
+    border-radius:8px;padding:7px;}
+  .config-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:#0e1013;flex:0 0 auto;}
+  .config-info{flex:1;min-width:0;}
+  .config-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .config-date{font-size:11px;color:var(--muted);}
+  .config-actions{display:flex;gap:6px;flex:0 0 auto;}
 </style>
 </head>
 <body>
@@ -111,6 +119,16 @@
         <option value="installd">Inställd match</option>
         <option value="fri">Fri rubrik / tom mall</option>
       </select>
+    </section>
+
+    <section>
+      <h2>Sparade konfigurationer</h2>
+      <div id="configList" class="config-list"></div>
+      <div class="row" style="margin-top:10px;">
+        <input type="text" id="configName" placeholder="Namn, t.ex. lagen">
+        <button class="btn primary" id="saveConfigBtn" style="flex:0 0 auto;">Spara</button>
+      </div>
+      <div class="hint">Sparar bakgrund, vapen, lagnamn och layout — inte själva inläggstexten. Bra för att förbereda flera matcher i förväg och fylla i resultatet efteråt.</div>
     </section>
 
     <section>
@@ -140,7 +158,10 @@
         </div>
         <div>
           <div class="label">Motståndare</div>
-          <div class="dropzone small" id="crestAwayDrop">Ladda upp vapen</div>
+          <div class="dropzone small" id="crestAwayDrop">
+            <span id="crestAwayPlaceholder">Ladda upp vapen</span>
+            <img id="crestAwayImg" style="display:none;">
+          </div>
           <input type="file" id="crestAwayFile" accept="image/*" style="display:none">
         </div>
       </div>
@@ -254,6 +275,7 @@
   </main>
 </div>
 <script src="app.js"></script>
+<script src="configs.js"></script>
 <script src="publish.js"></script>
 </body>
 </html>
