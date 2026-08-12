@@ -174,13 +174,31 @@ class Handler(BaseHTTPRequestHandler):
         self._serve_static(route)
 
 
+def open_in_normal_safari_window(url):
+    """Force a regular (non-Private-Browsing) Safari window.
+
+    Plain webbrowser.open()/`open <url>` hands the URL to whatever Safari
+    window happens to be frontmost — if that's a Private window, saved data
+    (localStorage/IndexedDB) gets wiped the moment it's closed. Explicitly
+    asking Safari to make a new document sidesteps that; Private windows are
+    never created implicitly this way.
+    """
+    script = f'tell application "Safari"\nactivate\nmake new document with properties {{URL:"{url}"}}\nend tell'
+    try:
+        subprocess.run(["osascript", "-e", script], check=True, capture_output=True)
+    except Exception:
+        webbrowser.open(url)  # fallback: some other default browser, or osascript unavailable
+
+
 def main():
     scan_photos()
     scan_crests()
     server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     url = f"http://127.0.0.1:{PORT}"
     print(f"Matchdagsgenerator körs på {url}  (Ctrl+C för att stoppa)")
-    threading.Timer(0.6, lambda: webbrowser.open(url)).start()
+    print("OBS: om du redan har ett privat Safari-fönster öppet, se till att detta")
+    print("landar i ett VANLIGT fönster — annars raderas sparad data när du stänger det.")
+    threading.Timer(0.6, lambda: open_in_normal_safari_window(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
